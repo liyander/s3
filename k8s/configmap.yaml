@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: s3-backup-config
+  namespace: exercise-26
+data:
+  S3_BUCKET: replace-with-backup-bucket
+  S3_PREFIX: backups

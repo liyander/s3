@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: application-files
+  namespace: exercise-26
+data:
+  app.txt: application data
+  config.txt: config data

@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: s3-backup
+  namespace: exercise-26
+spec:
+  schedule: "0 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: s3-backup
+          restartPolicy: OnFailure
+          containers:
+            - name: backup
+              image: amazon/aws-cli:2.15.57
+              command:
+                - /bin/sh
+                - /scripts/backup.sh
+              envFrom:
+                - configMapRef:
+                    name: s3-backup-config
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                - name: application-files
+                  mountPath: /backup-source/application
+                - name: config-files
+                  mountPath: /backup-source/config
+          volumes:
+            - name: scripts
+              configMap:
+                name: s3-backup-scripts
+                defaultMode: 493
+            - name: application-files
+              configMap:
+                name: application-files
+            - name: config-files
+              configMap:
+                name: s3-backup-config

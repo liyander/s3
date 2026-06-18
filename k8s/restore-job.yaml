@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: s3-restore-demo
+  namespace: exercise-26
+spec:
+  template:
+    spec:
+      serviceAccountName: s3-backup
+      restartPolicy: Never
+      containers:
+        - name: restore
+          image: amazon/aws-cli:2.15.57
+          command:
+            - /bin/sh
+            - /scripts/restore.sh
+          envFrom:
+            - configMapRef:
+                name: s3-backup-config
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+            - name: restore-target
+              mountPath: /restore-target
+      volumes:
+        - name: scripts
+          configMap:
+            name: s3-backup-scripts
+            defaultMode: 493
+        - name: restore-target
+          emptyDir: {}

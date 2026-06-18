@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: s3-backup-scripts
+  namespace: exercise-26
+data:
+  backup.sh: |
+    set -eu
+    timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
+    archive="/tmp/backup-${timestamp}.tar.gz"
+    key="${S3_PREFIX:-backups}/backup-${timestamp}.tar.gz"
+    tar -czf "${archive}" -C /backup-source .
+    aws s3 cp "${archive}" "s3://${S3_BUCKET}/${key}"
+    echo "${key}" > /tmp/latest-backup-key
+    aws s3 cp /tmp/latest-backup-key "s3://${S3_BUCKET}/${S3_PREFIX:-backups}/latest-backup-key"
+  restore.sh: |
+    set -eu
+    key="${BACKUP_KEY:-}"
+    if [ -z "${key}" ]; then
+      aws s3 cp "s3://${S3_BUCKET}/${S3_PREFIX:-backups}/latest-backup-key" /tmp/latest-backup-key
+      key="$(cat /tmp/latest-backup-key)"
+    fi
+    aws s3 cp "s3://${S3_BUCKET}/${key}" /tmp/restore.tar.gz
+    mkdir -p /restore-target
+    tar -xzf /tmp/restore.tar.gz -C /restore-target
+    find /restore-target -maxdepth 3 -type f | sort
